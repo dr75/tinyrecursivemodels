@@ -3,6 +3,9 @@ import math
 import torch
 from torch import nn
 
+# Use float32 for better compatibility with MPS/CPU and faster computation
+COMPUTE_DTYPE = torch.float32
+
 
 def trunc_normal_init_(tensor: torch.Tensor, std: float = 1.0, lower: float = -2.0, upper: float = 2.0):
     # NOTE: PyTorch nn.init.trunc_normal_ is not mathematically correct, the std dev is not actually the std dev of initialized tensor

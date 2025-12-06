@@ -5,6 +5,8 @@ import torch.nn.functional as F
 from torch import nn
 import math
 
+from models.common import COMPUTE_DTYPE
+
 IGNORE_LABEL_ID = -100
 
 
@@ -22,8 +24,9 @@ def log_stablemax(x, dim=-1):
 
 
 def stablemax_cross_entropy(logits, labels, ignore_index: int = -100, valid_mask=None):
-    logprobs = log_stablemax(logits.to(torch.float64), dim=-1)
-
+    # Use float32 for compatibility with MPS/CPU, shift logits for numerical stability
+    logits_shifted = logits - logits.max(dim=-1, keepdim=True)[0]
+    logprobs = log_stablemax(logits_shifted.to(COMPUTE_DTYPE), dim=-1)
     if valid_mask is None:
         valid_mask = (labels != ignore_index)
     transformed_labels = torch.where(valid_mask, labels, 0)
@@ -33,9 +36,8 @@ def stablemax_cross_entropy(logits, labels, ignore_index: int = -100, valid_mask
 
 
 def softmax_cross_entropy(logits, labels, ignore_index: int = -100):
-    # Cast logits to f32
     # Flatten logits
-    return F.cross_entropy(logits.to(torch.float32).view(-1, logits.shape[-1]), labels.to(torch.long).view(-1), ignore_index=ignore_index, reduction="none").view(labels.shape)
+    return F.cross_entropy(logits.to(COMPUTE_DTYPE).view(-1, logits.shape[-1]), labels.to(torch.long).view(-1), ignore_index=ignore_index, reduction="none").view(labels.shape)
 
 
 class ACTLossHead(nn.Module):
@@ -43,7 +45,7 @@ class ACTLossHead(nn.Module):
         super().__init__()
         self.model = model
         self.loss_fn = globals()[loss_type]
-        
+
     def initial_carry(self, *args, **kwargs):
         return self.model.initial_carry(*args, **kwargs)  # type: ignore
 
@@ -69,13 +71,13 @@ class ACTLossHead(nn.Module):
 
             is_correct = mask & (torch.argmax(outputs["logits"], dim=-1) == labels)
             seq_is_correct = is_correct.sum(-1) == loss_counts
-            
+
             # Metrics (halted)
             valid_metrics = new_carry.halted & (loss_counts > 0)
             metrics = {
                 "count": valid_metrics.sum(),
-                
-                "accuracy":       torch.where(valid_metrics, (is_correct.to(torch.float32) / loss_divisor).sum(-1), 0).sum(),
+
+                "accuracy":       torch.where(valid_metrics, (is_correct.to(COMPUTE_DTYPE) / loss_divisor).sum(-1), 0).sum(),
                 "exact_accuracy": (valid_metrics & seq_is_correct).sum(),
 
                 "q_halt_accuracy": (valid_metrics & ((outputs["q_halt_logits"] >= 0) == seq_is_correct)).sum(),
@@ -100,4 +102,3 @@ class ACTLossHead(nn.Module):
         detached_outputs = {k: outputs[k].detach() for k in return_keys if k in outputs}
 
         return new_carry, lm_loss + 0.5 * (q_halt_loss + q_continue_loss), metrics, detached_outputs, new_carry.halted.all()
-

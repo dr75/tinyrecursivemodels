@@ -1,0 +1,50 @@
+# use this file to initialize the virtual env
+# usage: source venv.rc
+
+venv=./.venv
+
+mod_venv=venv
+
+# create the venv if not yet there
+if [ ! -d "$venv" ]; then
+  # Prefer higher versions first, starting from 3.12
+  for py in python3.13 python3.12 python3; do
+    if command -v "$py" >/dev/null 2>&1; then
+      pybin=$(command -v "$py")
+      break
+    fi
+  done
+  if [ -z "$pybin" ]; then echo "python3 not found"; return 1; fi
+  ver=$($pybin -c 'import sys; print("%d.%d" % sys.version_info[:2])')
+  major=${ver%%.*}; minor=${ver##*.}
+  if [ "$major" -lt 3 ] || { [ "$major" -eq 3 ] && [ "$minor" -lt 12 ]; }; then
+    echo "Python >=3.12 required for this project (found $ver at $pybin)."; return 1
+  fi
+  $pybin -m $mod_venv $venv
+  source $venv/bin/activate
+  python -m pip install --upgrade pip wheel setuptools
+else
+  source $venv/bin/activate
+fi
+
+# Install PyTorch based on platform
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "Installing PyTorch for macOS (MPS/CPU)..."
+    python -m pip install --upgrade torch torchvision torchaudio
+else
+    echo "Installing PyTorch with CUDA support..."
+    python -m pip install --pre --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126
+fi
+
+# Install the project with dev extras (quote to avoid zsh globbing)
+python -m pip install -e '.[dev]'
+
+# Reinstall adam-atan2 with special flags to ensure backend is built correctly (Linux only)
+if [[ "$OSTYPE" != "darwin"* ]]; then
+    python -m pip install --no-cache-dir --no-build-isolation --force-reinstall --no-deps adam-atan2
+fi
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "NOTE: Triton and adam-atan2 are excluded on macOS (CUDA dependencies)!"
+    echo "Training will use standard AdamW optimizer instead."
+fi

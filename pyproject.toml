@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tinyrecursivemodels"
+version = "0.1.0"
+description = "Recursive reasoning with tiny networks for puzzle-solving tasks (ARC-AGI, Sudoku, Maze)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Marko Rosenmüller" }]
+keywords = ["deep-learning", "recursive-reasoning", "arc-agi", "pytorch"]
+dependencies = [
+    "torch",
+    "adam-atan2; platform_system != 'Darwin'",
+    "einops",
+    "tqdm",
+    "coolname",
+    "pydantic",
+    "argdantic",
+    "wandb",
+    "omegaconf",
+    "hydra-core",
+    "huggingface_hub",
+    "packaging",
+    "ninja",
+    "wheel",
+    "setuptools",
+    "setuptools-scm",
+    "pydantic-core",
+    "numba",
+    "triton; platform_system != 'Darwin'",
+]
+
+[project.scripts]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+include = ["models*", "dataset*", "evaluators*", "utils*"]
+exclude = ["tests*", "docs*", "kaggle*", "data*", "checkpoints*"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2",
+]
