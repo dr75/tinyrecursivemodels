@@ -30,17 +30,7 @@ from puzzle_dataset import PuzzleDataset, PuzzleDatasetConfig, PuzzleDatasetMeta
 from utils.functions import load_model_class, get_model_source_path
 from models.sparse_embedding import CastedSparseEmbeddingSignSGD_Distributed
 from models.ema import EMAHelper
-
-# Device detection: CUDA > MPS > CPU
-if torch.cuda.is_available():
-    DEVICE = torch.device("cuda")
-    print("Using device: CUDA")
-elif torch.backends.mps.is_available():
-    DEVICE = torch.device("mps")
-    print("Using device: MPS (Apple Silicon)")
-else:
-    DEVICE = torch.device("cpu")
-    print("Using device: CPU")
+from models.common import DEVICE, COMPUTE_DTYPE
 
 
 class LossConfig(pydantic.BaseModel):

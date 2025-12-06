@@ -3,8 +3,19 @@ import math
 import torch
 from torch import nn
 
-# Use float32 for better compatibility with MPS/CPU and faster computation
-COMPUTE_DTYPE = torch.float32
+# Device detection: CUDA > MPS > CPU
+if torch.cuda.is_available():
+    DEVICE = torch.device("cuda")
+    COMPUTE_DTYPE = torch.float64  # Default from original code
+    print("Using device: CUDA with float64")
+elif torch.backends.mps.is_available():
+    DEVICE = torch.device("mps")
+    COMPUTE_DTYPE = torch.float32  # MPS requires float32
+    print("Using device: MPS (Apple Silicon) with float32")
+else:
+    DEVICE = torch.device("cpu")
+    COMPUTE_DTYPE = torch.float32
+    print("Using device: CPU with float32")
 
 
 def trunc_normal_init_(tensor: torch.Tensor, std: float = 1.0, lower: float = -2.0, upper: float = 2.0):
