@@ -126,8 +126,8 @@ def main():
     parser = argparse.ArgumentParser(description="Train Tiny Recursive Models")
     parser.add_argument("dataset", choices=list(DATASETS.keys()), help="Dataset to train on")
     parser.add_argument("--no-attention", action="store_true", help="Use MLP-T instead of attention")
-    parser.add_argument("--small", action="store_true", help="Laptop mode with 1 layer: batch_size=32, hidden_size=256, L_layers=1, fewer epochs")
-    parser.add_argument("--tiny", action="store_true", help="Laptop mode with 2 layers: batch_size=32, hidden_size=256, L_layers=2, fewer epochs")
+    parser.add_argument("--small", action="store_true", help="Laptop mode with reduced architecture and fewer epochs")
+    parser.add_argument("--tiny", action="store_true", help="Laptop mode with fewer epochs")
     parser.add_argument("--verbose", action="store_true", help="Print training and evaluation metrics to console")
     args = parser.parse_args()
 

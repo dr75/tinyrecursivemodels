@@ -22,16 +22,29 @@ Tiny Recursion Model (TRM) recursively improves its predicted answer y with a ti
 
 Installation should take a few minutes. For the smallest experiments on Sudoku-Extreme (pretrain_mlp_t_sudoku), you need 1 GPU with enough memory. With 1 L40S (48Gb Ram), it takes around 18h to finish. In case that you run into issues due to library versions, here is the requirements with the exact versions used: [specific_requirements.txt](https://github.com/SamsungSAILMontreal/TinyRecursiveModels/blob/main/specific_requirements.txt).
 
+**For Linux with CUDA:**
 - Python 3.10 (or similar)
-- Cuda 12.6.0 (or similar)
+- CUDA 12.6.0 (or similar)
 
 ```bash
 pip install --upgrade pip wheel setuptools
 pip install --pre --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu126 # install torch based on your cuda version
-pip install -r requirements.txt # install requirements
-pip install --no-cache-dir --no-build-isolation adam-atan2 
+pip install -e . # install all dependencies from pyproject.toml (triton excluded on Mac)
+pip install --no-cache-dir --no-build-isolation adam-atan2 # if you encounter build issues
 wandb login YOUR-LOGIN # login if you want the logger to sync results to your Weights & Biases (https://wandb.ai/)
 ```
+
+**For macOS:**
+- Python 3.10 (or similar)
+
+```bash
+pip install --upgrade pip wheel setuptools
+pip install --upgrade torch torchvision torchaudio # install PyTorch for Mac
+pip install -e . # install all dependencies from pyproject.toml (triton and adam-atan2 automatically excluded)
+wandb login YOUR-LOGIN # optional: login to sync results to Weights & Biases (https://wandb.ai/)
+```
+
+**Note:** Training on Mac runs with MPS is significantly faster than CPU.
 
 ### Dataset Preparation
 
@@ -166,13 +179,13 @@ If you find our work useful, please consider citing:
 
 ```bibtex
 @misc{jolicoeurmartineau2025morerecursivereasoningtiny,
-      title={Less is More: Recursive Reasoning with Tiny Networks}, 
+      title={Less is More: Recursive Reasoning with Tiny Networks},
       author={Alexia Jolicoeur-Martineau},
       year={2025},
       eprint={2510.04871},
       archivePrefix={arXiv},
       primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2510.04871}, 
+      url={https://arxiv.org/abs/2510.04871},
 }
 ```
 
@@ -180,13 +193,13 @@ and the Hierarchical Reasoning Model (HRM):
 
 ```bibtex
 @misc{wang2025hierarchicalreasoningmodel,
-      title={Hierarchical Reasoning Model}, 
+      title={Hierarchical Reasoning Model},
       author={Guan Wang and Jin Li and Yuhao Sun and Xing Chen and Changling Liu and Yue Wu and Meng Lu and Sen Song and Yasin Abbasi Yadkori},
       year={2025},
       eprint={2506.21734},
       archivePrefix={arXiv},
       primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2506.21734}, 
+      url={https://arxiv.org/abs/2506.21734},
 }
 ```
 
