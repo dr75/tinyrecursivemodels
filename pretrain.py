@@ -30,7 +30,7 @@ from puzzle_dataset import PuzzleDataset, PuzzleDatasetConfig, PuzzleDatasetMeta
 from utils.functions import load_model_class, get_model_source_path
 from models.sparse_embedding import CastedSparseEmbeddingSignSGD_Distributed
 from models.ema import EMAHelper
-from models.common import DEVICE, COMPUTE_DTYPE
+from models.common import DEVICE, COMPUTE_DTYPE, IS_CUDA
 
 
 class LossConfig(pydantic.BaseModel):

@@ -15,6 +15,11 @@ import argparse
 import subprocess
 from pathlib import Path
 
+# Import device info to adjust batch size for CPU/MPS
+import sys
+sys.path.insert(0, str(Path(__file__).parent))
+from models.common import IS_CUDA
+
 
 # Dataset configurations: (data_path, epochs, eval_interval, lr, puzzle_emb_lr, weight_decay, H_cycles, L_cycles, extra_args)
 DATASETS = {
@@ -43,20 +48,30 @@ def build_command(dataset: str, attention: bool, small: bool, tiny: bool, verbos
     hidden_size = None
     L_layers = 2
     max_test_batches = None
+    mode_name = "full"
+    epochs_orig = epochs
+
+    # Reduce batch size for CPU/MPS devices
+    if not IS_CUDA and global_batch_size is None:
+        global_batch_size = 32
 
     # Adjust for small/tiny mode (lower memory, faster iterations)
     if small or tiny:
-        epochs_orig = epochs
-        epochs = min(epochs, 200)  # Cap epochs for quick testing
-        eval_interval = 50
-        H_cycles = 2  # Reduce computation
-        L_cycles = 3
-        global_batch_size = 32  # Much smaller batch size
-        hidden_size = 256  # Smaller model
-        L_layers = 2 if tiny else 1  # tiny has 2 layers, small has 1
+        epochs = min(epochs, 1000)
+        eval_interval = 100
         max_test_batches = 10  # Only evaluate on 10 batches
         mode_name = "tiny" if tiny else "small"
-        print(f"🔧 {mode_name.capitalize()} mode enabled: epochs={epochs} (from {epochs_orig}), batch_size={global_batch_size}, hidden_size={hidden_size}, L_layers={L_layers}, max_test_batches={max_test_batches}")
+
+    if tiny:
+        # Smaller model
+        L_layers = 1
+        hidden_size = 256
+
+        # Reduce computation
+        H_cycles = 2
+        L_cycles = 3
+
+    print(f"🔧 {mode_name.capitalize()} mode: epochs={epochs} (from {epochs_orig}), batch_size={global_batch_size}, hidden_size={hidden_size}, L_layers={L_layers}, max_test_batches={max_test_batches}")
 
     # Build command
     mode = "att" if attention else "mlp_t"
@@ -126,8 +141,8 @@ def main():
     parser = argparse.ArgumentParser(description="Train Tiny Recursive Models")
     parser.add_argument("dataset", choices=list(DATASETS.keys()), help="Dataset to train on")
     parser.add_argument("--no-attention", action="store_true", help="Use MLP-T instead of attention")
-    parser.add_argument("--small", action="store_true", help="Laptop mode with reduced architecture and fewer epochs")
-    parser.add_argument("--tiny", action="store_true", help="Laptop mode with fewer epochs")
+    parser.add_argument("--small", action="store_true", help="Laptop mode with fewer epochs")
+    parser.add_argument("--tiny", action="store_true", help="Laptop mode with reduced architecture and fewer epochs")
     parser.add_argument("--verbose", action="store_true", help="Print training and evaluation metrics to console")
     args = parser.parse_args()
 
